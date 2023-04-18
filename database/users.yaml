@@ -1,0 +1,9 @@
+- name: "Radek Mocek"
+  username: "RM"
+  email: "radek.mocek@tul.cz"
+  password: "passwd123"
+
+- name: "Norbert Roland Kný"
+  username: "knee"
+  email: "radek.mocek@tul.cz"
+  password: "passwd456"
