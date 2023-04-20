@@ -99,7 +99,10 @@ def login():
 
 @app.route("/authorize", methods=["POST"])
 def authorize():
-    """Ověření 2fa kódu z e-mailu a případná generace a poskytnutí jwt tokenu."""
+    """
+    Ověření 2fa kódu z e-mailu a případná generace a poskytnutí jwt tokenu.
+    Přijímá data v body v json ve formátu '{"email": "<e-mail>", "code": "<2fa kód>"}'
+    """
     # Kontrola kódu
     email = request.json.get("email")
     code = request.json.get("code")
@@ -120,6 +123,16 @@ def authorize():
         algorithm="HS256",
     )
     return jsonify({"token": token})
+
+
+# Výpis #
+
+
+@app.route("/accounts")
+@token_required
+def get_user_bank_accounts(username):
+    """Vrací seznam všech účtů (majitel, měna, zůstatek) daného uživatele."""
+    return jsonify(database_controller.get_bank_accounts(username))
 
 
 #########

@@ -10,3 +10,10 @@ def get_user(username):
         if user["username"] == username:
             return user
     return None
+
+
+def get_bank_accounts(username):
+    """Vrátí seznam všech účtů vlastněných uživatelem s username."""
+    with open("database/bank_accounts.yaml", "r", encoding="utf8") as file:
+        bank_accounts = yaml.safe_load(file)
+    return list(filter(lambda bank_account: bank_account["owner"] == username, bank_accounts))
