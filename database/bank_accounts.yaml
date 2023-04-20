@@ -1,0 +1,11 @@
+- owner: "RM"
+  currency: "CZK"
+  balance: 200
+
+- owner: "knee"
+  currency: "CZK"
+  balance: 150000
+
+- owner: "knee"
+  currency: "AUD"
+  balance: 50
