@@ -8,6 +8,7 @@ from flask import Flask, jsonify, request
 from flask_mail import Mail, Message
 import database_controller
 import exchange_rates_service
+import payments_service
 
 
 ####################################
@@ -50,7 +51,7 @@ def token_required(func):
             return jsonify({"message": "Chybějící token."}), 401
         try:
             data = jwt.decode(token, app.config["SECRET_KEY"], algorithms="HS256")
-        except:  # pylint: disable=W0702
+        except jwt.exceptions.InvalidTokenError:
             return jsonify({"message": "Neplatný token."}), 401
         return func(data["username"], *args, **kwargs)
 
@@ -97,7 +98,7 @@ def login():
 def authorize():
     """
     Ověření 2fa kódu z e-mailu a případná generace a poskytnutí jwt tokenu.
-    Přijímá data v body v json ve formátu '{"email": "<e-mail>", "code": "<2fa kód>"}'
+    Přijímá data v body ve formátu json: '{"email": "<e-mail>", "code": "<2fa kód>"}'.
     """
     # Kontrola kódu
     email = request.json.get("email")
@@ -124,11 +125,54 @@ def authorize():
 # Výpis #
 
 
-@app.route("/accounts")
+@app.route("/user_bank_accounts")
 @token_required
 def get_user_bank_accounts(username):
     """Vrací seznam všech účtů (majitel, měna, zůstatek) daného uživatele."""
     return jsonify(database_controller.get_bank_accounts(username))
+
+
+# Platby #
+
+
+@app.route("/payment_incoming")
+@token_required
+def payment_incoming(username):
+    """
+    Připíše uživateli na účet ve měně 'currency' částku 'amount' a zaloguje.
+    Pokud uživatel nemá účet v dané měně, je platba převedena na CZK.
+    Přijímá data v body ve formátu json: '{"currency": "<měna>", "amount": "<částka>"}'.
+    """
+    # Získat si hodnoty z request body
+    currency = request.json.get("currency")
+    amount = request.json.get("amount")
+    # Je částka číslo?
+    try:
+        float(amount)
+    except ValueError:
+        return jsonify({"message": "Chybně zadaná částka."}), 401
+    amount = float(amount)
+    # Je částka kladná?
+    if amount <= 0:
+        return jsonify({"message": "Příchozí platba musí být kladná částka."}), 401
+    exchange_rates = database_controller.get_exchange_rates()
+    # Existuje měna?
+    if currency not in exchange_rates or currency == "_Date":
+        return jsonify({"message": "Zadaná měna neexistuje."}), 401
+    # Má uživatel účet v dané měně?
+    user_account = database_controller.get_bank_account(username, currency)
+    additional_message = ""
+    if not user_account:
+        # Pokud ne, použít převod na CZK.
+        user_account = database_controller.get_bank_account(username, "CZK")
+        if not user_account:
+            return jsonify({"message": f"Uživatel nemá účet ani v {currency}, ani v CZK."}), 401
+        amount = payments_service.currency_to_czk(amount, currency, exchange_rates)
+        additional_message = " s převodem na CZK"
+    user_account = user_account[0]  # ("Rozbalení" z jednopoložkového seznamu)
+    # Připsat peníze na účet (+ zápis do databáze)
+    payments_service.payment_incoming(user_account, amount)
+    return jsonify({"message": f"Platba byla provedena{additional_message}."}), 200
 
 
 #########

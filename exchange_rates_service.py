@@ -40,6 +40,7 @@ def __get_exchange_rates_from_cnb():
         return None
     rates = rates_text.split("\n")
     rates_dictionary = {}
+    rates_dictionary["CZK"] = 1
     # Předpokládáme, že první řádek začíná datem ve formátu 'dd.mm.yyyy'
     rates_dictionary["_Date"] = rates[0][:10]
     # Vynechat hlavičku a poslední prázdný řádek (předpokládáme, že jednotlivé měny jsou od třetího řádku do posledního řádku)
