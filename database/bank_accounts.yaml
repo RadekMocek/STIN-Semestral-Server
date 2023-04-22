@@ -1,11 +1,12 @@
-- owner: "RM"
-  currency: "CZK"
-  balance: 200
-
-- owner: "knee"
-  currency: "CZK"
-  balance: 150000
-
-- owner: "knee"
-  currency: "AUD"
-  balance: 50
+- balance: 200
+  currency: CZK
+  iban: CZ8750519687368863935001
+  owner: RM
+- balance: 150456.8
+  currency: CZK
+  iban: CZ8750519687368863935002
+  owner: knee
+- balance: 70.0
+  currency: AUD
+  iban: CZ8750519687368863935003
+  owner: knee
