@@ -3,17 +3,12 @@ import random
 import string
 import datetime
 from functools import wraps
-import requests
 import jwt
 from flask import Flask, jsonify, request
 from flask_mail import Mail, Message
 import database_controller
+import exchange_rates_service
 
-#############
-# Konstanty #
-#############
-
-EXCHANGE_RATE_SOURCE = "https://www.cnb.cz/cs/financni-trhy/devizovy-trh/kurzy-devizoveho-trhu/kurzy-devizoveho-trhu/denni_kurz.txt"
 
 ####################################
 # Vytvoření a konfigurace aplikace #
@@ -31,7 +26,7 @@ app.config["MAIL_DEFAULT_SENDER"] = "radek.mocek.flask@gmail.com"
 app.config["MAIL_USERNAME"] = "radek.mocek.flask@gmail.com"
 app.config["MAIL_PASSWORD"] = "pieytppmviphtenl"
 mail = Mail(app)
-codes = {}  # Slovník e-mail: kód + expirace
+codes = {}  # Slovník e-mail: kód, username, expirace
 
 
 ##############
@@ -66,12 +61,13 @@ def token_required(func):
 # Endpointy #
 #############
 
+# Kurzy #
 
-@app.route("/")
-@token_required
-def get_data_from_url(username):
-    """Testovací endpoint získá data z ČNB."""
-    return requests.get(EXCHANGE_RATE_SOURCE, timeout=10).text + username
+
+@app.route("/exchange_rates")
+def get_exchange_rates():
+    """Vrátí aktuální kurzy."""
+    return jsonify(exchange_rates_service.get_exchange_rates())
 
 
 # Přihlášení #
