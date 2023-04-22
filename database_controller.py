@@ -17,3 +17,16 @@ def get_bank_accounts(username):
     with open("database/bank_accounts.yaml", "r", encoding="utf8") as file:
         bank_accounts = yaml.safe_load(file)
     return list(filter(lambda bank_account: bank_account["owner"] == username, bank_accounts))
+
+
+def get_exchange_rates():
+    """Vrátí kurzy uložené v souboru."""
+    with open("database/exchange_rates.yaml", "r", encoding="utf8") as file:
+        rates_dictionary = yaml.safe_load(file)
+    return rates_dictionary
+
+
+def set_exchange_rates(rates_dictionary):
+    """Uloží nové kurzy do souboru."""
+    with open("database/exchange_rates.yaml", "w", encoding="utf8") as file:
+        yaml.dump(rates_dictionary, file)
