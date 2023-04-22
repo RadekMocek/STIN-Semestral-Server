@@ -6,16 +6,17 @@ from functools import wraps
 import jwt
 from flask import Flask, jsonify, request
 from flask_mail import Mail, Message
+from flask_cors import CORS
 import database_controller
 import exchange_rates_service
 import payments_service
-
 
 ####################################
 # Vytvoření a konfigurace aplikace #
 ####################################
 
 app = Flask(__name__)
+CORS(app)
 app.config["SECRET_KEY"] = "Střeštěná ách mrkev"
 
 # E-mail #
