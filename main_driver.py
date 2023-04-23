@@ -176,6 +176,54 @@ def payment_incoming(username):
     return jsonify({"message": f"Platba byla provedena{additional_message}."}), 200
 
 
+@app.route("/payment_outgoing")
+@token_required
+def payment_outgoing(username):
+    """
+    Pokud má uživatel 'username' na účtě s měnou 'currency' dostatek prostředků 'amount',
+    je provedena odchozí platba – částka se odečte z účtu a platba je zalogována.
+    Pokud nemá účet v dané měně nebo nemá dostatek prostředků, převedene se 'amount' na CZK a
+    a platba se stejným způsobem pokusí provést v CZK.
+    Přijímá data v body ve formátu json: '{"currency": "<měna>", "amount": "<částka>"}'.
+    """
+    # Získat si hodnoty z request body
+    currency = request.json.get("currency")
+    amount = request.json.get("amount")
+    # Je částka číslo?
+    try:
+        float(amount)
+    except ValueError:
+        return jsonify({"message": "Chybně zadaná částka."}), 401
+    amount = float(amount)
+    # Je částka kladná?
+    if amount <= 0:
+        return jsonify({"message": "Odchozí platba musí být kladná částka."}), 401
+    exchange_rates = database_controller.get_exchange_rates()
+    # Existuje měna?
+    if currency not in exchange_rates or currency == "_Date":
+        return jsonify({"message": "Zadaná měna neexistuje."}), 401
+    # Může uživatel zaplatit v currency?
+    user_account = database_controller.get_bank_account(username, currency)
+    if __is_account_ready_for_outgoing_payment(user_account, amount):
+        payments_service.payment_outgoing(user_account[0], amount)
+        return jsonify({"message": "Platba byla provedena."}), 200
+    user_account = database_controller.get_bank_account(username, "CZK")
+    amount = payments_service.currency_to_czk(amount, currency, exchange_rates)
+    if __is_account_ready_for_outgoing_payment(user_account, amount):
+        payments_service.payment_outgoing(user_account[0], amount)
+        return jsonify({"message": "Platba byla provedena s převodem na CZK."}), 200
+    return jsonify({"message": "Platba nemohla být provedena."}), 401
+
+
+def __is_account_ready_for_outgoing_payment(bank_account, amount):
+    if len(bank_account) == 0:
+        return False
+    bank_account = bank_account[0]
+    if bank_account["balance"] < amount:
+        return False
+    return True
+
+
 #########
 # Zážeh #
 #########
