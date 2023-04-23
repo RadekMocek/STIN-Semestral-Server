@@ -224,6 +224,23 @@ def __is_account_ready_for_outgoing_payment(bank_account, amount):
     return True
 
 
+# Výpis #
+
+
+@app.route("/payment_history")
+@token_required
+def payment_history(username):
+    """Vypíše historii pohybů na účtu s konkrétním 'iban', pokud se jedná o účet patřící uživateli s 'username'."""
+    # Získat si hodnoty z request body
+    iban = request.json.get("iban")
+    # Patří účet uživateli?
+    user_accounts = database_controller.get_bank_accounts(username)
+    for user_account in user_accounts:
+        if user_account["iban"] == iban:
+            return jsonify(database_controller.get_payment_history(iban)), 200
+    return jsonify({"message": "Tento účet vám nepatří."}), 401
+
+
 #########
 # Zážeh #
 #########
