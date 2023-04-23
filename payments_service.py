@@ -3,6 +3,7 @@ from decimal import Decimal
 from datetime import datetime
 import database_controller
 
+
 def currency_to_czk(amount, currency, exchange_rates):
     """Převod částky 'amount' z 'currency' na CZK podle 'exchange_rates'."""
     return float(Decimal(amount * exchange_rates[currency]).quantize(Decimal("1e-6")))
@@ -15,3 +16,8 @@ def payment_incoming(user_account, amount):
     timestamp = datetime.timestamp(datetime.now())
     database_controller.set_bank_account_balance(iban, balance)
     database_controller.log_payment(iban, amount, timestamp)
+
+
+def payment_outgoing(user_account, amount):
+    """odečte z 'user_account' částku 'amount' a uloží do databáze."""
+    payment_incoming(user_account, -amount)

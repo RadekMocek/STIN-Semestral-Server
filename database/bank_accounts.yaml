@@ -2,11 +2,11 @@
   currency: CZK
   iban: CZ8750519687368863935001
   owner: RM
-- balance: 150456.8
+- balance: 148996.65
   currency: CZK
   iban: CZ8750519687368863935002
   owner: knee
-- balance: 70.0
+- balance: 20.0
   currency: AUD
   iban: CZ8750519687368863935003
   owner: knee
