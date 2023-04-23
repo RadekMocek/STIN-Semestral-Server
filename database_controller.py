@@ -44,6 +44,13 @@ def log_payment(iban, amount, timestamp):
         file.write(f'- iban: "{iban}"\n  value: {amount}\n  timestamp: {timestamp}\n')
 
 
+def get_payment_history(iban):
+    """Vrátí historii plateb pro účet s daným 'iban'."""
+    with open("database/payments.yaml", "r", encoding="utf8") as file:
+        payments = yaml.safe_load(file)
+    return list(filter(lambda payment: payment["iban"] == iban, payments))
+
+
 def get_exchange_rates():
     """Vrátí kurzy uložené v souboru (cache)."""
     with open("database/exchange_rates.yaml", "r", encoding="utf8") as file:
