@@ -8,6 +8,7 @@ import database_controller
 EXCHANGE_RATES_SOURCE = "https://www.cnb.cz/cs/financni-trhy/devizovy-trh/kurzy-devizoveho-trhu/kurzy-devizoveho-trhu/denni_kurz.txt"
 EXCHANGE_RATES_REFRESH_HOUR = 14
 EXCHANGE_RATES_REFRESH_MINUTE = 30
+EXCHANGE_RATES_REFRESH_WEEKDAYS = [0, 1, 2, 3, 4]
 TIMEZONE = pytz.timezone("Europe/Prague")
 
 
@@ -21,9 +22,10 @@ def get_exchange_rates():
         # Pokud ano, tak je vrátíme
         return rates_dictionary
     # Je už po 14:30?
-    if (
-        current_datetime.hour == EXCHANGE_RATES_REFRESH_HOUR and current_datetime.minute > EXCHANGE_RATES_REFRESH_MINUTE
-    ) or current_datetime.hour > EXCHANGE_RATES_REFRESH_HOUR:
+    if current_datetime.weekday() in EXCHANGE_RATES_REFRESH_WEEKDAYS and (
+        (current_datetime.hour == EXCHANGE_RATES_REFRESH_HOUR and current_datetime.minute > EXCHANGE_RATES_REFRESH_MINUTE)
+        or current_datetime.hour > EXCHANGE_RATES_REFRESH_HOUR
+    ):
         # Pokud ano, zkusíme načíst a vrátit nové kurzy z ČNB
         new_rates = __get_exchange_rates_from_cnb()
         if new_rates:
