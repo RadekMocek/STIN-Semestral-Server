@@ -16,22 +16,41 @@ def get_exchange_rates():
     """Vrací slovník měnových kurzů buď z cache nebo volá __get_exchange_rates_from_cnb."""
     # Načtení nacachovaných kurzů
     rates_dictionary = database_controller.get_exchange_rates()
-    # Jsou kurzy z dnešního data?
+    cache_date = rates_dictionary["_Date"]
+    # Aktuální datetime
     current_datetime = datetime.now(TIMEZONE)
-    if current_datetime.strftime("%d.%m.%Y") == rates_dictionary["_Date"]:
-        # Pokud ano, tak je vrátíme
-        return rates_dictionary
-    # Je už po 14:30?
-    if current_datetime.weekday() in EXCHANGE_RATES_REFRESH_WEEKDAYS and (
-        (current_datetime.hour == EXCHANGE_RATES_REFRESH_HOUR and current_datetime.minute > EXCHANGE_RATES_REFRESH_MINUTE)
-        or current_datetime.hour > EXCHANGE_RATES_REFRESH_HOUR
-    ):
+    # Jsou nacachované kurzy staré?
+    if __should_get_exchange_rates_from_cnb(current_datetime, cache_date):
         # Pokud ano, zkusíme načíst a vrátit nové kurzy z ČNB
         new_rates = __get_exchange_rates_from_cnb()
         if new_rates:
             return new_rates
     # Jinak vracíme staré kurzy
     return rates_dictionary
+
+
+def __should_get_exchange_rates_from_cnb(current_datetime, cache_date):
+    """Měli bychom se pokusit získat nové kurzy z ČNB na základě akutálního a nacachovaného datumu?"""
+    if current_datetime.strftime("%d.%m.%Y") == cache_date:
+        # Máme kurzy z dneška
+        return False
+    # Nemáme kurzy z dneška
+    cache_datetime = datetime.strptime(cache_date, "%d.%m.%Y").replace(tzinfo=TIMEZONE)
+    if current_datetime.weekday() not in EXCHANGE_RATES_REFRESH_WEEKDAYS:
+        # Je víkend
+        if cache_datetime.weekday() == EXCHANGE_RATES_REFRESH_WEEKDAYS[-1] and (current_datetime - cache_datetime).days <= 2:
+            # a máme kurzy z posledního pátku
+            return False
+        # Je víkend ale nemáme kurzy z posledního pátku
+        return True
+    # Není víkend
+    if (
+        current_datetime.hour == EXCHANGE_RATES_REFRESH_HOUR and current_datetime.minute > EXCHANGE_RATES_REFRESH_MINUTE
+    ) or current_datetime.hour > EXCHANGE_RATES_REFRESH_HOUR:
+        # Je po 14:30
+        return True
+    # Není po 14:30
+    return False
 
 
 def __get_exchange_rates_from_cnb():
