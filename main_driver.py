@@ -28,7 +28,7 @@ app.config["MAIL_DEFAULT_SENDER"] = "radek.mocek.flask@gmail.com"
 app.config["MAIL_USERNAME"] = "radek.mocek.flask@gmail.com"
 app.config["MAIL_PASSWORD"] = "pieytppmviphtenl"
 mail = Mail(app)
-codes = {}  # Slovník e-mail: kód, username, expirace
+codes = {}  # Slovník username: kód, expirace
 
 
 ##############
@@ -91,7 +91,7 @@ def login():
     email_message = Message(subject="STIN banka ověření", recipients=[user["email"]])
     email_message.body = f"Váš kód dvoufázového ověření je:\n\n{code}\n\n"
     mail.send(email_message)
-    codes[user["email"]] = (code, user["username"], expiration)
+    codes[user["username"]] = (code, expiration)
     return jsonify({"message": "Na e-mail byl odeslán 2fa kód."}), 200
 
 
@@ -99,19 +99,18 @@ def login():
 def authorize():
     """
     Ověření 2fa kódu z e-mailu a případná generace a poskytnutí jwt tokenu.
-    Přijímá data v body ve formátu json: '{"email": "<e-mail>", "code": "<2fa kód>"}'.
+    Přijímá data v body ve formátu json: '{"username": "<username>", "code": "<2fa kód>"}'.
     """
     # Kontrola kódu
-    email = request.json.get("email")
+    username = request.json.get("username")
     code = request.json.get("code")
-    if email not in codes or codes[email][0] != code:
+    if username not in codes or codes[username][0] != code:
         return jsonify({"message": "Chybný kód."}), 401
-    if datetime.datetime.utcnow() > codes[email][2]:
-        del codes[email]
+    if datetime.datetime.utcnow() > codes[username][1]:
+        del codes[username]
         return jsonify({"message": "Platnost kódu vypršela, přihlašte se znovu."}), 401
     # Generace tokenu
-    username = codes[email][1]
-    del codes[email]
+    del codes[username]
     token = jwt.encode(
         {
             "username": username,
