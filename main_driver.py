@@ -136,7 +136,7 @@ def get_user_bank_accounts(username):
 # Platby #
 
 
-@app.route("/payment_incoming")
+@app.route("/payment_incoming", methods=["POST"])
 @token_required
 def payment_incoming(username):
     """
@@ -176,7 +176,7 @@ def payment_incoming(username):
     return jsonify({"message": f"Platba byla provedena{additional_message}."}), 200
 
 
-@app.route("/payment_outgoing")
+@app.route("/payment_outgoing", methods=["POST"])
 @token_required
 def payment_outgoing(username):
     """
