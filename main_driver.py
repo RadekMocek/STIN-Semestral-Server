@@ -69,7 +69,7 @@ def token_required(func):
 @app.route("/exchange_rates")
 def get_exchange_rates():
     """Vrátí aktuální kurzy."""
-    return jsonify(exchange_rates_service.get_exchange_rates())
+    return jsonify(exchange_rates_service.get_exchange_rates()), 200
 
 
 # Přihlášení #
@@ -81,7 +81,7 @@ def login():
     # Kontrola údajů
     authorization = request.authorization
     if not authorization or not authorization.username or not authorization.password:
-        return jsonify({"message": "Nevyplněné údaje."}), 401
+        return jsonify({"message": "Nevyplněné údaje."}), 400
     user = database_controller.get_user(authorization.username)
     if not user or user["password"] != authorization.password:
         return jsonify({"message": "Chybné jméno nebo heslo."}), 401
@@ -119,7 +119,7 @@ def authorize():
         app.config["SECRET_KEY"],
         algorithm="HS256",
     )
-    return jsonify({"token": token})
+    return jsonify({"token": token}), 200
 
 
 # Výpis #
@@ -129,7 +129,7 @@ def authorize():
 @token_required
 def get_user_bank_accounts(username):
     """Vrací seznam všech účtů (majitel, měna, zůstatek) daného uživatele."""
-    return jsonify(database_controller.get_bank_accounts(username))
+    return jsonify(database_controller.get_bank_accounts(username)), 200
 
 
 # Platby #
@@ -150,15 +150,15 @@ def payment_incoming(username):
     try:
         float(amount)
     except ValueError:
-        return jsonify({"message": "Chybně zadaná částka."}), 401
+        return jsonify({"message": "Chybně zadaná částka."}), 422
     amount = float(amount)
     # Je částka kladná?
     if amount <= 0:
-        return jsonify({"message": "Příchozí platba musí být kladná částka."}), 401
+        return jsonify({"message": "Příchozí platba musí být kladná částka."}), 422
     exchange_rates = database_controller.get_exchange_rates()
     # Existuje měna?
     if currency not in exchange_rates or currency == "_Date":
-        return jsonify({"message": "Zadaná měna neexistuje."}), 401
+        return jsonify({"message": "Zadaná měna neexistuje."}), 422
     # Má uživatel účet v dané měně?
     user_account = database_controller.get_bank_account(username, currency)
     additional_message = ""
@@ -166,7 +166,7 @@ def payment_incoming(username):
         # Pokud ne, použít převod na CZK.
         user_account = database_controller.get_bank_account(username, "CZK")
         if not user_account:
-            return jsonify({"message": f"Uživatel nemá účet ani v {currency}, ani v CZK."}), 401
+            return jsonify({"message": f"Uživatel nemá účet ani v {currency}, ani v CZK."}), 422
         amount = payments_service.currency_to_czk(amount, currency, exchange_rates)
         additional_message = " s převodem na CZK"
     user_account = user_account[0]  # ("Rozbalení" z jednopoložkového seznamu)
@@ -192,15 +192,15 @@ def payment_outgoing(username):
     try:
         float(amount)
     except ValueError:
-        return jsonify({"message": "Chybně zadaná částka."}), 401
+        return jsonify({"message": "Chybně zadaná částka."}), 422
     amount = float(amount)
     # Je částka kladná?
     if amount <= 0:
-        return jsonify({"message": "Odchozí platba musí být kladná částka."}), 401
+        return jsonify({"message": "Odchozí platba musí být kladná částka."}), 422
     exchange_rates = database_controller.get_exchange_rates()
     # Existuje měna?
     if currency not in exchange_rates or currency == "_Date":
-        return jsonify({"message": "Zadaná měna neexistuje."}), 401
+        return jsonify({"message": "Zadaná měna neexistuje."}), 422
     # Může uživatel zaplatit v currency?
     user_account = database_controller.get_bank_account(username, currency)
     if __is_account_ready_for_outgoing_payment(user_account, amount):
@@ -211,7 +211,7 @@ def payment_outgoing(username):
     if __is_account_ready_for_outgoing_payment(user_account, amount):
         payments_service.payment_outgoing(user_account[0], amount)
         return jsonify({"message": "Platba byla provedena s převodem na CZK."}), 200
-    return jsonify({"message": "Platba nemohla být provedena."}), 401
+    return jsonify({"message": "Platba nemohla být provedena."}), 422
 
 
 def __is_account_ready_for_outgoing_payment(bank_account, amount):
