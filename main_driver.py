@@ -114,7 +114,7 @@ def authorize():
     token = jwt.encode(
         {
             "username": username,
-            "exp": datetime.datetime.utcnow() + datetime.timedelta(minutes=30),
+            "exp": datetime.datetime.utcnow() + datetime.timedelta(minutes=45),
         },
         app.config["SECRET_KEY"],
         algorithm="HS256",
@@ -231,7 +231,7 @@ def __is_account_ready_for_outgoing_payment(bank_account, amount):
 def payment_history(username):
     """Vypíše historii pohybů na účtu s konkrétním 'iban', pokud se jedná o účet patřící uživateli s 'username'."""
     # Získat si hodnoty z request body
-    iban = request.json.get("iban")
+    iban = request.args.get("iban")
     # Patří účet uživateli?
     user_accounts = database_controller.get_bank_accounts(username)
     for user_account in user_accounts:
