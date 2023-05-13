@@ -3,7 +3,7 @@ from datetime import datetime
 from decimal import Decimal
 import pytz
 import requests
-import database_controller
+from services import database_service
 
 EXCHANGE_RATES_SOURCE = "https://www.cnb.cz/cs/financni-trhy/devizovy-trh/kurzy-devizoveho-trhu/kurzy-devizoveho-trhu/denni_kurz.txt"
 EXCHANGE_RATES_REFRESH_HOUR = 14
@@ -15,7 +15,7 @@ TIMEZONE = pytz.timezone("Europe/Prague")
 def get_exchange_rates():
     """Vrací slovník měnových kurzů buď z cache nebo volá __get_exchange_rates_from_cnb."""
     # Načtení nacachovaných kurzů
-    rates_dictionary = database_controller.get_exchange_rates()
+    rates_dictionary = database_service.get_exchange_rates()
     cache_date = rates_dictionary["_Date"]
     # Aktuální datetime
     current_datetime = datetime.now(TIMEZONE)
@@ -71,5 +71,5 @@ def __get_exchange_rates_from_cnb():
         # Použití decimal, abychom se vyhli float nepřesnostem
         rates_dictionary[rate_sections[3]] = float(Decimal(float(rate_sections[4].replace(",", ".")) / int(rate_sections[2])).quantize(Decimal("1e-6")))
     # Nacachovat nové kurzy a vrátit je
-    database_controller.set_exchange_rates(rates_dictionary)
+    database_service.set_exchange_rates(rates_dictionary)
     return rates_dictionary
