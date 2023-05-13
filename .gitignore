@@ -1,3 +1,7 @@
+# STIN bank
+database/
+
+# Flask
 .DS_Store
 .env
 .flaskenv
