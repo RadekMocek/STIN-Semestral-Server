@@ -1,2 +1,5 @@
 [tool.black]
 line-length = 158
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
