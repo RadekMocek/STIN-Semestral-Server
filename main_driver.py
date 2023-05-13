@@ -7,9 +7,9 @@ import jwt
 from flask import Flask, jsonify, request
 from flask_mail import Mail, Message
 from flask_cors import CORS
-import database_controller
-import exchange_rates_service
-import payments_service
+import services.database_service as database_service
+import services.exchange_rates_service as exchange_rates_service
+import services.payments_service as payments_service
 
 ####################################
 # Vytvoření a konfigurace aplikace #
@@ -82,7 +82,7 @@ def login():
     authorization = request.authorization
     if not authorization or not authorization.username or not authorization.password:
         return jsonify({"message": "Nevyplněné údaje."}), 400
-    user = database_controller.get_user(authorization.username)
+    user = database_service.get_user(authorization.username)
     if not user or user["password"] != authorization.password:
         return jsonify({"message": "Chybné jméno nebo heslo."}), 401
     # Pokud jsou údaje v pořádku, poslat 2fa kód na e-mail
@@ -129,7 +129,7 @@ def authorize():
 @token_required
 def get_user_bank_accounts(username):
     """Vrací seznam všech účtů (majitel, měna, zůstatek) daného uživatele."""
-    return jsonify(database_controller.get_bank_accounts(username)), 200
+    return jsonify(database_service.get_bank_accounts(username)), 200
 
 
 # Platby #
@@ -155,16 +155,16 @@ def payment_incoming(username):
     # Je částka kladná?
     if amount <= 0:
         return jsonify({"message": "Příchozí platba musí být kladná částka."}), 422
-    exchange_rates = database_controller.get_exchange_rates()
+    exchange_rates = database_service.get_exchange_rates()
     # Existuje měna?
     if currency not in exchange_rates or currency == "_Date":
         return jsonify({"message": "Zadaná měna neexistuje."}), 422
     # Má uživatel účet v dané měně?
-    user_account = database_controller.get_bank_account(username, currency)
+    user_account = database_service.get_bank_account(username, currency)
     additional_message = ""
     if not user_account:
         # Pokud ne, použít převod na CZK.
-        user_account = database_controller.get_bank_account(username, "CZK")
+        user_account = database_service.get_bank_account(username, "CZK")
         if not user_account:
             return jsonify({"message": f"Uživatel nemá účet ani v {currency}, ani v CZK."}), 422
         amount = payments_service.currency_to_czk(amount, currency, exchange_rates)
@@ -197,16 +197,16 @@ def payment_outgoing(username):
     # Je částka kladná?
     if amount <= 0:
         return jsonify({"message": "Odchozí platba musí být kladná částka."}), 422
-    exchange_rates = database_controller.get_exchange_rates()
+    exchange_rates = database_service.get_exchange_rates()
     # Existuje měna?
     if currency not in exchange_rates or currency == "_Date":
         return jsonify({"message": "Zadaná měna neexistuje."}), 422
     # Může uživatel zaplatit v currency?
-    user_account = database_controller.get_bank_account(username, currency)
+    user_account = database_service.get_bank_account(username, currency)
     if __is_account_ready_for_outgoing_payment(user_account, amount):
         payments_service.payment_outgoing(user_account[0], amount)
         return jsonify({"message": "Platba byla provedena."}), 200
-    user_account = database_controller.get_bank_account(username, "CZK")
+    user_account = database_service.get_bank_account(username, "CZK")
     amount = payments_service.currency_to_czk(amount, currency, exchange_rates)
     if __is_account_ready_for_outgoing_payment(user_account, amount):
         payments_service.payment_outgoing(user_account[0], amount)
@@ -233,10 +233,10 @@ def payment_history(username):
     # Získat si hodnoty z request body
     iban = request.args.get("iban")
     # Patří účet uživateli?
-    user_accounts = database_controller.get_bank_accounts(username)
+    user_accounts = database_service.get_bank_accounts(username)
     for user_account in user_accounts:
         if user_account["iban"] == iban:
-            return jsonify(database_controller.get_payment_history(iban)), 200
+            return jsonify(database_service.get_payment_history(iban)), 200
     return jsonify({"message": "Tento účet vám nepatří."}), 401
 
 

@@ -1,7 +1,7 @@
 """Služba pro provádění plateb."""
 from decimal import Decimal
 from datetime import datetime
-import database_controller
+from services import database_service
 
 
 def currency_to_czk(amount, currency, exchange_rates):
@@ -14,8 +14,8 @@ def payment_incoming(user_account, amount):
     iban = user_account["iban"]
     balance = float(Decimal(user_account["balance"] + amount).quantize(Decimal("1e-6")))
     timestamp = datetime.timestamp(datetime.now())
-    database_controller.set_bank_account_balance(iban, balance)
-    database_controller.log_payment(iban, amount, timestamp)
+    database_service.set_bank_account_balance(iban, balance)
+    database_service.log_payment(iban, amount, timestamp)
 
 
 def payment_outgoing(user_account, amount):
