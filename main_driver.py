@@ -4,6 +4,7 @@ import string
 import datetime
 from functools import wraps
 import jwt
+import git
 from flask import Flask, jsonify, request
 from flask_mail import Mail, Message
 from flask_cors import CORS
@@ -238,6 +239,28 @@ def payment_history(username):
         if user_account["iban"] == iban:
             return jsonify(database_service.get_payment_history(iban)), 200
     return jsonify({"message": "Tento účet vám nepatří."}), 401
+
+
+# Index #
+
+
+@app.route("/")
+def index():
+    """Informuje uživatele o adrese klientské aplikace."""
+    return "Pro použití aplikace STIN Bank navštivte https://radekmocek.github.io/STIN-Semestral-Client/", 200
+
+
+# Continuous integration #
+
+
+@app.route("/deploy", methods=["POST"])
+def deploy():
+    """Zajišťuje automatické nasazení na PythonAnywhere při pushi do větve main."""
+    repo = git.Repo("./STIN-Semestral-Server")
+    origin = repo.remotes.origin
+    repo.create_head("main", origin.refs.main).set_tracking_branch(origin.refs.main).checkout()
+    origin.pull()
+    return "", 200
 
 
 #########
