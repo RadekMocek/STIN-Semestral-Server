@@ -65,6 +65,15 @@ def __get_exchange_rates_from_cnb():
         rates_text = requests.get(EXCHANGE_RATES_SOURCE, timeout=10).text
     except requests.exceptions.RequestException:
         return None
+    # Přeparsovat nové kurzy na slovník
+    rates_dictionary = __parse_exchange_rates_from_cnb(rates_text)
+    # Nacachovat a vrátit
+    database_service.set_exchange_rates(rates_dictionary)
+    return rates_dictionary
+
+
+def __parse_exchange_rates_from_cnb(rates_text):
+    """Text měnových kurzů z ČNB převede na slovník."""
     rates = rates_text.split("\n")
     rates_dictionary = {}
     rates_dictionary["CZK"] = 1
@@ -76,6 +85,5 @@ def __get_exchange_rates_from_cnb():
         rate_sections = rate.split("|")
         # Použití decimal, abychom se vyhli float nepřesnostem
         rates_dictionary[rate_sections[3]] = float(Decimal(float(rate_sections[4].replace(",", ".")) / int(rate_sections[2])).quantize(Decimal("1e-6")))
-    # Nacachovat nové kurzy a vrátit je
-    database_service.set_exchange_rates(rates_dictionary)
+    # Vrátit slovník kurzů
     return rates_dictionary

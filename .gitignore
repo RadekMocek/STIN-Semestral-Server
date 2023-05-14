@@ -1,5 +1,6 @@
 # STIN bank
 database/
+database_*/
 
 # Flask
 .DS_Store
@@ -28,4 +29,5 @@ htmlcov/
 .coverage.*
 *,cover
 ## coverage run -m pytest
+## coverage report
 ## coverage html
