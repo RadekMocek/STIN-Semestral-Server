@@ -49,6 +49,7 @@ def set_bank_account_balance(iban, balance):
 
 def log_payment(iban, amount, timestamp):
     """Zaloguje platbu."""
+    print("\ndatabase service database path:", database_path)
     if not payments_path.exists():
         return
     with open(payments_path, "a", encoding="utf8") as file:

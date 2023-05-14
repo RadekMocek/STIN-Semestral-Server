@@ -53,5 +53,5 @@ def test_payment(fs):
 
     with open(database_path / "payments.yaml", "r", encoding="utf8") as file:
         payments = file.read()
-
+    print("\n       test_file database path:", database_path)
     assert payments == f'- iban: "CZTEST"\n  value: -10\n  timestamp: {datetime.timestamp(datetime.now())}\n'
