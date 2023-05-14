@@ -35,11 +35,13 @@ def test_should_get_exchange_rates_from_cnb_latest_1400():
     result = exchange_rates_service.__should_get_exchange_rates_from_cnb(compare_date, cache_date)
     assert result == False
 
+
 def test_should_get_exchange_rates_from_cnb_old_1400_monday():
     compare_date = datetime(2023, 5, 15, 14, 0).replace(tzinfo=pytz.timezone("Europe/Prague"))
     cache_date = "05.05.2023"
     result = exchange_rates_service.__should_get_exchange_rates_from_cnb(compare_date, cache_date)
     assert result == True
+
 
 def test_should_get_exchange_rates_from_cnb_old_1400():
     compare_date = datetime(2023, 5, 17, 14, 0).replace(tzinfo=pytz.timezone("Europe/Prague"))
@@ -47,11 +49,13 @@ def test_should_get_exchange_rates_from_cnb_old_1400():
     result = exchange_rates_service.__should_get_exchange_rates_from_cnb(compare_date, cache_date)
     assert result == True
 
+
 def test_should_get_exchange_rates_from_cnb_old_1400_false():
     compare_date = datetime(2023, 5, 17, 14, 0).replace(tzinfo=pytz.timezone("Europe/Prague"))
     cache_date = "16.05.2023"
     result = exchange_rates_service.__should_get_exchange_rates_from_cnb(compare_date, cache_date)
     assert result == False
+
 
 def test_should_get_exchange_rates_from_cnb_1431():
     compare_date = datetime(2023, 5, 15, 14, 31).replace(tzinfo=pytz.timezone("Europe/Prague"))
