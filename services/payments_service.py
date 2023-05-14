@@ -20,4 +20,6 @@ def payment_incoming(user_account, amount):
 
 def payment_outgoing(user_account, amount):
     """Odečte z 'user_account' částku 'amount' a uloží do databáze."""
+    print("Before payment outgoing: ", database_service.get_bank_accounts("test"))
     payment_incoming(user_account, -amount)
+    print("After payment outgoing: ", database_service.get_bank_accounts("test"))

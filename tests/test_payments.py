@@ -10,6 +10,7 @@ from pyfakefs.fake_filesystem_unittest import Patcher
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import services.payments_service as payments_service
+import services.database_service as database_service
 
 test_data_path = pathlib.Path(__file__).parent / "data"
 database_path = pathlib.Path(__file__).parent.parent / "database"
@@ -69,9 +70,9 @@ def test_payment():
     with Patcher() as patcher:
         patcher.fs.create_file(database_path / "bank_accounts.yaml", contents=account_before_payment)
         patcher.fs.create_file(database_path / "payments.yaml")
-
+        print("Before payment: ", database_service.get_bank_accounts("test"))
         payments_service.payment_outgoing({"balance": 100, "currency": "CZK", "iban": "CZTEST", "owner": "test"}, 10)
-
+        print("After payment: ", database_service.get_bank_accounts("test"))
         with open(database_path / "bank_accounts.yaml", "r", encoding="utf8") as file:
             bank_accounts = yaml.safe_load(file)
 
