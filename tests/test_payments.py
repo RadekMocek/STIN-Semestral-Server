@@ -67,12 +67,12 @@ def test_payment():
   owner: test"""
 
     account_after_payment = {"balance": 90, "currency": "CZK", "iban": "CZTEST", "owner": "test"}
-    with Patcher() as patcher:
+    with Patcher(use_cache=False) as patcher:
         patcher.fs.create_file(database_path / "bank_accounts.yaml", contents=account_before_payment)
         patcher.fs.create_file(database_path / "payments.yaml")
         print("Before payment: ", database_service.get_bank_accounts("test"))
         payments_service.payment_outgoing({"balance": 100, "currency": "CZK", "iban": "CZTEST", "owner": "test"}, 10)
-        print("After payment: ", database_service.get_bank_accounts("test"))
+    
         with open(database_path / "bank_accounts.yaml", "r", encoding="utf8") as file:
             bank_accounts = yaml.safe_load(file)
 
