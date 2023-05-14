@@ -5,6 +5,7 @@ import pathlib
 import yaml
 from datetime import datetime
 from freezegun import freeze_time
+from pyfakefs.fake_filesystem_unittest import Patcher
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -32,8 +33,8 @@ def test_currency_to_czk(amount, currency, expected):
     assert payments_service.currency_to_czk(amount, currency, rates_dict) == expected
 
 
-#@freeze_time("2012-01-01")
-#def test_payment(fs):
+# @freeze_time("2012-01-01")
+# def test_payment(fs):
 #    account_before_payment = """- balance: 100
 #  currency: CZK
 #  iban: CZTEST
@@ -53,5 +54,30 @@ def test_currency_to_czk(amount, currency, expected):
 #
 #    with open(database_path / "payments.yaml", "r", encoding="utf8") as file:
 #        payments = file.read()
-#    
+#
 #    assert payments == f'- iban: "CZTEST"\n  value: -10\n  timestamp: {datetime.timestamp(datetime.now())}\n'
+
+
+@freeze_time("2012-01-01")
+def test_payment():
+    account_before_payment = """- balance: 100
+  currency: CZK
+  iban: CZTEST
+  owner: test"""
+
+    account_after_payment = {"balance": 90, "currency": "CZK", "iban": "CZTEST", "owner": "test"}
+    with Patcher() as patcher:
+        patcher.fs.create_file(database_path / "bank_accounts.yaml", contents=account_before_payment)
+        patcher.fs.create_file(database_path / "payments.yaml")
+
+        payments_service.payment_outgoing({"balance": 100, "currency": "CZK", "iban": "CZTEST", "owner": "test"}, 10)
+
+        with open(database_path / "bank_accounts.yaml", "r", encoding="utf8") as file:
+            bank_accounts = yaml.safe_load(file)
+
+        assert bank_accounts == [account_after_payment]
+
+        with open(database_path / "payments.yaml", "r", encoding="utf8") as file:
+            payments = file.read()
+
+        assert payments == f'- iban: "CZTEST"\n  value: -10\n  timestamp: {datetime.timestamp(datetime.now())}\n'
