@@ -5,7 +5,7 @@ import datetime
 from functools import wraps
 import jwt
 import git
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, render_template_string, request
 from flask_mail import Mail, Message
 from flask_cors import CORS
 import services.database_service as database_service
@@ -247,7 +247,13 @@ def payment_history(username):
 @app.route("/")
 def index():
     """Informuje uživatele o adrese klientské aplikace."""
-    return "Pro použití aplikace STIN Bank navštivte https://radekmocek.github.io/STIN-Semestral-Client/", 200
+    return (
+        render_template_string(
+            """<p>Aplikace STIN Bank je dostupná na adrese
+            <a href="https://radekmocek.github.io/STIN-Semestral-Client/">https://radekmocek.github.io/STIN-Semestral-Client/</a></p>"""
+        ),
+        200,
+    )
 
 
 # Continuous integration #

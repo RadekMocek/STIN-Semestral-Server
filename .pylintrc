@@ -2,4 +2,4 @@
 max-line-length=158
 
 [MESSAGES CONTROL]
-disable=R0402
+disable=R0402,E0401
