@@ -55,8 +55,3 @@ def test_currency_to_czk(amount, currency, expected):
 #        payments = file.read()
 #    
 #    assert payments == f'- iban: "CZTEST"\n  value: -10\n  timestamp: {datetime.timestamp(datetime.now())}\n'
-
-def test_fakefs_test(fs):
-    # "fs" is the reference to the fake file system
-    fs.create_file("/var/data/xx1.txt")
-    assert os.path.exists("/var/data/xx1.txt")
