@@ -19,5 +19,5 @@ def payment_incoming(user_account, amount):
 
 
 def payment_outgoing(user_account, amount):
-    """odečte z 'user_account' částku 'amount' a uloží do databáze."""
+    """Odečte z 'user_account' částku 'amount' a uloží do databáze."""
     payment_incoming(user_account, -amount)
