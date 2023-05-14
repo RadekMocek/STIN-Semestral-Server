@@ -50,6 +50,12 @@ def __should_get_exchange_rates_from_cnb(current_datetime, cache_date):
         # Je po 14:30
         return True
     # Není po 14:30
+    if current_datetime.weekday() == EXCHANGE_RATES_REFRESH_WEEKDAYS[0] and (current_datetime - cache_datetime).days != 3:
+        # Je pondělí před 14:30, ale nemáme kurzy z pátku
+        return True
+    if current_datetime.weekday() != EXCHANGE_RATES_REFRESH_WEEKDAYS[0] and (current_datetime - cache_datetime).days != 1:
+        # Je út/st/čt před 14:30, ale nemáme kurzy ze včera
+        return True
     return False
 
 

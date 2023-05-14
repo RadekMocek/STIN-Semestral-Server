@@ -27,3 +27,5 @@ htmlcov/
 .coverage
 .coverage.*
 *,cover
+## coverage run -m pytest
+## coverage html
