@@ -35,50 +35,25 @@ def test_currency_to_czk(amount, currency, expected):
 
 
 # @freeze_time("2012-01-01")
-# def test_payment(fs):
+# def test_payment():
 #    account_before_payment = """- balance: 100
 #  currency: CZK
 #  iban: CZTEST
 #  owner: test"""
 #
 #    account_after_payment = {"balance": 90, "currency": "CZK", "iban": "CZTEST", "owner": "test"}
+#    with Patcher(use_cache=False) as patcher:
+#        patcher.fs.create_file(database_path / "bank_accounts.yaml", contents=account_before_payment)
+#        patcher.fs.create_file(database_path / "payments.yaml")
+#        print("Before payment: ", database_service.get_bank_accounts("test"))
+#        payments_service.payment_outgoing({"balance": 100, "currency": "CZK", "iban": "CZTEST", "owner": "test"}, 10)
 #
-#    fs.create_file(database_path / "bank_accounts.yaml", contents=account_before_payment)
-#    fs.create_file(database_path / "payments.yaml")
+#        with open(database_path / "bank_accounts.yaml", "r", encoding="utf8") as file:
+#            bank_accounts = yaml.safe_load(file)
 #
-#    payments_service.payment_outgoing({"balance": 100, "currency": "CZK", "iban": "CZTEST", "owner": "test"}, 10)
+#        assert bank_accounts == [account_after_payment]
 #
-#    with open(database_path / "bank_accounts.yaml", "r", encoding="utf8") as file:
-#        bank_accounts = yaml.safe_load(file)
+#        with open(database_path / "payments.yaml", "r", encoding="utf8") as file:
+#            payments = file.read()
 #
-#    assert bank_accounts == [account_after_payment]
-#
-#    with open(database_path / "payments.yaml", "r", encoding="utf8") as file:
-#        payments = file.read()
-#
-#    assert payments == f'- iban: "CZTEST"\n  value: -10\n  timestamp: {datetime.timestamp(datetime.now())}\n'
-
-
-@freeze_time("2012-01-01")
-def test_payment():
-    account_before_payment = """- balance: 100
-  currency: CZK
-  iban: CZTEST
-  owner: test"""
-
-    account_after_payment = {"balance": 90, "currency": "CZK", "iban": "CZTEST", "owner": "test"}
-    with Patcher(use_cache=False) as patcher:
-        patcher.fs.create_file(database_path / "bank_accounts.yaml", contents=account_before_payment)
-        patcher.fs.create_file(database_path / "payments.yaml")
-        print("Before payment: ", database_service.get_bank_accounts("test"))
-        payments_service.payment_outgoing({"balance": 100, "currency": "CZK", "iban": "CZTEST", "owner": "test"}, 10)
-    
-        with open(database_path / "bank_accounts.yaml", "r", encoding="utf8") as file:
-            bank_accounts = yaml.safe_load(file)
-
-        assert bank_accounts == [account_after_payment]
-
-        with open(database_path / "payments.yaml", "r", encoding="utf8") as file:
-            payments = file.read()
-
-        assert payments == f'- iban: "CZTEST"\n  value: -10\n  timestamp: {datetime.timestamp(datetime.now())}\n'
+#        assert payments == f'- iban: "CZTEST"\n  value: -10\n  timestamp: {datetime.timestamp(datetime.now())}\n'
