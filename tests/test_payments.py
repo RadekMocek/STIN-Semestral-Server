@@ -33,7 +33,7 @@ def test_currency_to_czk(amount, currency, expected):
 
 
 @freeze_time("2012-01-01")
-def test_bruh(fs):
+def test_payment(fs):
     account_before_payment = """- balance: 100
   currency: CZK
   iban: CZTEST
