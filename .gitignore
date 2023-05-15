@@ -23,11 +23,8 @@ build/
 docs/_build/
 .vscode
 
-# Coverage reports
+# Coverage reports – `coverage run -m pytest & coverage html`
 htmlcov/
 .coverage
 .coverage.*
 *,cover
-## coverage run -m pytest
-## coverage report
-## coverage html
