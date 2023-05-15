@@ -3,14 +3,20 @@ import sys
 from datetime import datetime
 import pytz
 import pathlib
-#import requests
-#import requests_mock
+import requests_mock
+from pyfakefs.fake_filesystem_unittest import Patcher
+import yaml
+from freezegun import freeze_time
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import services.exchange_rates_service as exchange_rates_service
 
+
+EXCHANGE_RATES_ONLINE_SOURCE = "https://www.cnb.cz/cs/financni-trhy/devizovy-trh/kurzy-devizoveho-trhu/kurzy-devizoveho-trhu/denni_kurz.txt"
 TEST_DATA_PATH = pathlib.Path(__file__).parent / "data"
+DATABASE_PATH = pathlib.Path(__file__).parent.parent / "database"
+EXCHANGE_RATES_OFFLINE_PATH = DATABASE_PATH / "exchange_rates.yaml"
 
 
 def test_should_get_exchange_rates_from_cnb_today():
@@ -76,7 +82,7 @@ def test_should_get_exchange_rates_from_cnb_1500():
     assert result == True
 
 
-expected_exchange_rates_dict_2023_05_12 = {
+EXPECTED_EXCHANGE_RATES_DICT_2023_05_12 = {
     "_Date": "12.05.2023",
     "CZK": 1,
     "AUD": 14.481,
@@ -117,10 +123,22 @@ def test_parse_exchange_rates_from_cnb():
     with open(TEST_DATA_PATH / "denni_kurz_2023_05_12.txt", "r", encoding="utf8") as file:
         input = file.read()
     result = exchange_rates_service.__parse_exchange_rates_from_cnb(input)
-    assert result == expected_exchange_rates_dict_2023_05_12
+    assert result == EXPECTED_EXCHANGE_RATES_DICT_2023_05_12
 
 
-#def test_get_exchange_rates_from_cnb():
-#    with requests_mock.Mocker() as m:
-#        m.get("http://test.com", text="resp")
-#        assert requests.get("http://test.com").text == "resp"
+def test_get_exchange_rates_from_cnb():
+    with open(TEST_DATA_PATH / "denni_kurz_2023_05_12.txt", "r", encoding="utf8") as file:
+        input = file.read()
+    with requests_mock.Mocker() as mocker, Patcher(use_cache=False) as patcher:
+        mocker.get(EXCHANGE_RATES_ONLINE_SOURCE, text=input)
+        patcher.fs.create_file(EXCHANGE_RATES_OFFLINE_PATH)
+        assert exchange_rates_service.__get_exchange_rates_from_cnb() == EXPECTED_EXCHANGE_RATES_DICT_2023_05_12
+
+
+@freeze_time("2023-05-12")
+def test_get_exchange_rates():
+    with Patcher(use_cache=False) as patcher:
+        patcher.fs.create_file(EXCHANGE_RATES_OFFLINE_PATH)
+        with open(EXCHANGE_RATES_OFFLINE_PATH, "w", encoding="utf8") as file:
+            yaml.dump(EXPECTED_EXCHANGE_RATES_DICT_2023_05_12, file)
+        assert exchange_rates_service.get_exchange_rates() == EXPECTED_EXCHANGE_RATES_DICT_2023_05_12
