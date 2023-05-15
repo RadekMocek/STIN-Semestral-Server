@@ -3,12 +3,14 @@ import sys
 from datetime import datetime
 import pytz
 import pathlib
+#import requests
+#import requests_mock
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import services.exchange_rates_service as exchange_rates_service
 
-test_data_path = pathlib.Path(__file__).parent / "data"
+TEST_DATA_PATH = pathlib.Path(__file__).parent / "data"
 
 
 def test_should_get_exchange_rates_from_cnb_today():
@@ -112,7 +114,13 @@ expected_exchange_rates_dict_2023_05_12 = {
 
 
 def test_parse_exchange_rates_from_cnb():
-    with open(test_data_path / "denni_kurz_2023_05_12.txt", "r", encoding="utf8") as file:
+    with open(TEST_DATA_PATH / "denni_kurz_2023_05_12.txt", "r", encoding="utf8") as file:
         input = file.read()
     result = exchange_rates_service.__parse_exchange_rates_from_cnb(input)
     assert result == expected_exchange_rates_dict_2023_05_12
+
+
+#def test_get_exchange_rates_from_cnb():
+#    with requests_mock.Mocker() as m:
+#        m.get("http://test.com", text="resp")
+#        assert requests.get("http://test.com").text == "resp"
