@@ -6,7 +6,7 @@ import pathlib
 import yaml
 from datetime import datetime
 from freezegun import freeze_time
-from pyfakefs.fake_filesystem_unittest import Patcher
+#from pyfakefs.fake_filesystem_unittest import Patcher
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 

@@ -150,7 +150,7 @@ def payment_incoming(username):
     # Je částka číslo?
     try:
         float(amount)
-    except ValueError:
+    except (ValueError, TypeError):
         return jsonify({"message": "Chybně zadaná částka."}), 422
     amount = float(amount)
     # Je částka kladná?
@@ -192,7 +192,7 @@ def payment_outgoing(username):
     # Je částka číslo?
     try:
         float(amount)
-    except ValueError:
+    except (ValueError, TypeError):
         return jsonify({"message": "Chybně zadaná částka."}), 422
     amount = float(amount)
     # Je částka kladná?
