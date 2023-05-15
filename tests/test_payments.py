@@ -13,11 +13,11 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import services.payments_service as payments_service
 import services.database_service as database_service
 
-database_path = pathlib.Path(__file__).parent.parent / "database"
-users_path = database_path / "users.yaml"
-bank_accounts_path = database_path / "bank_accounts.yaml"
-payments_path = database_path / "payments.yaml"
-exchange_rates_path = database_path / "exchange_rates.yaml"
+DATABASE_PATH = pathlib.Path(__file__).parent.parent / "database"
+USERS_PATH = DATABASE_PATH / "users.yaml"
+BANK_ACCOUNTS_PATH = DATABASE_PATH / "bank_accounts.yaml"
+PAYMENTS_PATH = DATABASE_PATH / "payments.yaml"
+EXCHANGE_RATES_PATH = DATABASE_PATH / "exchange_rates.yaml"
 
 rates_dict = {
     "_Date": "12.05.2023",
@@ -52,22 +52,24 @@ def test_payment():
     used_account = bank_accounts_before[0]
 
     # Přes pyfakefs test prochází lokálně ale ne na githubu, takže si soubory vytvořím dočasně na disku
-    if not os.path.exists(database_path):
-        os.makedirs(database_path)
+    if not os.path.exists(DATABASE_PATH):
+        os.makedirs(DATABASE_PATH)
+    else:
+        assert False  # Pokud databáze již existuje, tak test ukončíme
 
-    with open(bank_accounts_path, "w+", encoding="utf8") as file:
+    with open(BANK_ACCOUNTS_PATH, "w+", encoding="utf8") as file:
         yaml.dump(bank_accounts_before, file)
 
-    payments_path.touch()
+    PAYMENTS_PATH.touch()
     # ---
 
     payments_service.payment_outgoing(used_account, 10)
 
     assert database_service.get_bank_accounts("user1") == user_bank_accounts_after
 
-    with open(database_path / "payments.yaml", "r", encoding="utf8") as file:
+    with open(DATABASE_PATH / "payments.yaml", "r", encoding="utf8") as file:
         payments = file.read()
     assert payments == f'- iban: "CZTEST1"\n  value: -10\n  timestamp: {datetime.timestamp(datetime.now())}\n'
 
-    # uklidit
-    shutil.rmtree(database_path)
+    # Celá databáze je na konci testu smazána
+    shutil.rmtree(DATABASE_PATH)
