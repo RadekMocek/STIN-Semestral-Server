@@ -1,10 +1,9 @@
-import yaml
 import os
 import sys
-from unittest.mock import mock_open
 import base64
 import jwt
 import datetime
+import pytest
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -72,3 +71,31 @@ def test_authorize_with_expired_code():
     response = app.test_client().post("/authorize", json=data)
 
     assert response.status_code == 401
+
+
+def test_no_token():
+    response = app.test_client().post("/payment_outgoing")
+    assert response.json["message"] == "Chybějící token."
+    assert response.status_code == 401
+
+
+def test_bad_token():
+    response = app.test_client().post("/payment_outgoing", headers={"Authorization": f"Bearer abcdefg"})
+    assert response.json["message"] == "Neplatný token."
+    assert response.status_code == 401
+
+
+@pytest.mark.parametrize(
+    "currency, amount, exchange_rates, expected",
+    [
+        ("CZK", 10, ["CZK"], True),
+        ("_Date", 10, ["CZK"], False),
+        ("_AUD", 10, ["CZK"], False),
+        ("CZK", -10, ["CZK"], False),
+        ("CZK", 0, ["CZK"], False),
+        (10, 10, ["CZK"], False),
+        (10, "CZK", ["CZK"], False),
+    ],
+)
+def test_is_payment_arguments_valid(currency, amount, exchange_rates, expected):
+    assert main_driver.__is_payment_arguments_valid(currency, amount, exchange_rates) == expected
