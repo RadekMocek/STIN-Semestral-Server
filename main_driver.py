@@ -147,19 +147,12 @@ def payment_incoming(username):
     # Získat si hodnoty z request body
     currency = request.json.get("currency")
     amount = request.json.get("amount")
-    # Je částka číslo?
-    try:
-        float(amount)
-    except (ValueError, TypeError):
-        return jsonify({"message": "Chybně zadaná částka."}), 422
-    amount = float(amount)
-    # Je částka kladná?
-    if amount <= 0:
-        return jsonify({"message": "Příchozí platba musí být kladná částka."}), 422
+    # Kontrola hodnot
     exchange_rates = database_service.get_exchange_rates()
-    # Existuje měna?
-    if currency not in exchange_rates or currency == "_Date":
-        return jsonify({"message": "Zadaná měna neexistuje."}), 422
+    if __is_payment_arguments_valid(currency, amount, exchange_rates):
+        amount = float(amount)
+    else:
+        return jsonify({"message": "Chybně zadaná částka."}), 422
     # Má uživatel účet v dané měně?
     user_account = database_service.get_bank_account(username, currency)
     additional_message = ""
@@ -189,19 +182,12 @@ def payment_outgoing(username):
     # Získat si hodnoty z request body
     currency = request.json.get("currency")
     amount = request.json.get("amount")
-    # Je částka číslo?
-    try:
-        float(amount)
-    except (ValueError, TypeError):
-        return jsonify({"message": "Chybně zadaná částka."}), 422
-    amount = float(amount)
-    # Je částka kladná?
-    if amount <= 0:
-        return jsonify({"message": "Odchozí platba musí být kladná částka."}), 422
+    # Kontrola hodnot
     exchange_rates = database_service.get_exchange_rates()
-    # Existuje měna?
-    if currency not in exchange_rates or currency == "_Date":
-        return jsonify({"message": "Zadaná měna neexistuje."}), 422
+    if __is_payment_arguments_valid(currency, amount, exchange_rates):
+        amount = float(amount)
+    else:
+        return jsonify({"message": "Chybně zadaná částka."}), 422
     # Může uživatel zaplatit v currency?
     user_account = database_service.get_bank_account(username, currency)
     if __is_account_ready_for_outgoing_payment(user_account, amount):
@@ -221,6 +207,23 @@ def __is_account_ready_for_outgoing_payment(bank_account, amount):
     bank_account = bank_account[0]
     if bank_account["balance"] < amount:
         return False
+    return True
+
+
+def __is_payment_arguments_valid(currency, amount, exchange_rates):
+    # Je částka číslo?
+    try:
+        float(amount)
+    except (ValueError, TypeError):
+        return False
+    amount = float(amount)
+    # Je částka kladná?
+    if amount <= 0:
+        return False
+    # Existuje měna?
+    if currency not in exchange_rates or currency == "_Date":
+        return False
+    # Jinak v pořádku
     return True
 
 
