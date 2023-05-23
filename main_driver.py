@@ -2,6 +2,7 @@
 import random
 import string
 import datetime
+from decimal import Decimal
 from functools import wraps
 import jwt
 import git
@@ -182,6 +183,10 @@ def payment_outgoing(username):
     # Získat si hodnoty z request body
     currency = request.json.get("currency")
     amount = request.json.get("amount")
+    return __payment_outgoing(username, currency, amount)
+
+
+def __payment_outgoing(username, currency, amount):
     # Kontrola hodnot
     exchange_rates = database_service.get_exchange_rates()
     if __is_payment_arguments_valid(currency, amount, exchange_rates):
@@ -193,11 +198,22 @@ def payment_outgoing(username):
     if __is_account_ready_for_outgoing_payment(user_account, amount):
         payments_service.payment_outgoing(user_account[0], amount)
         return jsonify({"message": "Platba byla provedena."}), 200
+    # Může využít kontokorentu?
+    if __is_account_ready_for_outgoing_payment_with_overdraft(user_account, amount):
+        payments_service.payment_outgoing(user_account[0], amount)
+        payments_service.overdraft_interest(user_account[0], 0.1)
+        return jsonify({"message": "Platba byla provedena s úrokem za kontokorent."}), 200
+    # Může uživatel zaplatit v CZK?
     user_account = database_service.get_bank_account(username, "CZK")
     amount = payments_service.currency_to_czk(amount, currency, exchange_rates)
     if __is_account_ready_for_outgoing_payment(user_account, amount):
         payments_service.payment_outgoing(user_account[0], amount)
         return jsonify({"message": "Platba byla provedena s převodem na CZK."}), 200
+    # Může využít CZK kontokorentu?
+    if __is_account_ready_for_outgoing_payment_with_overdraft(user_account, amount):
+        payments_service.payment_outgoing(user_account[0], amount)
+        payments_service.overdraft_interest(user_account[0], 0.1)
+        return jsonify({"message": "Platba byla provedena s převodem na CZK a úrokem za kontokorent."}), 200
     return jsonify({"message": "Platba nemohla být provedena."}), 422
 
 
@@ -206,6 +222,15 @@ def __is_account_ready_for_outgoing_payment(bank_account, amount):
         return False
     bank_account = bank_account[0]
     if bank_account["balance"] < amount:
+        return False
+    return True
+
+
+def __is_account_ready_for_outgoing_payment_with_overdraft(bank_account, amount):
+    if len(bank_account) == 0:
+        return False
+    bank_account = bank_account[0]
+    if amount >= float(Decimal(bank_account["balance"] + bank_account["balance"] * 0.1).quantize(Decimal("1e-6"))):
         return False
     return True
 
