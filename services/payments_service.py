@@ -21,3 +21,14 @@ def payment_incoming(user_account, amount):
 def payment_outgoing(user_account, amount):
     """Odečte z 'user_account' částku 'amount' a uloží do databáze."""
     payment_incoming(user_account, -amount)
+
+
+def overdraft_interest(user_account, amount):
+    """Jednorázový úrok 'amount'."""
+    iban = user_account["iban"]
+    account = database_service.get_bank_account_by_iban(iban)
+    if len(account) == 0:
+        return
+    account = account[0]
+    interest = -float(Decimal(account["balance"] * amount).quantize(Decimal("1e-6")))
+    payment_outgoing(account, interest)

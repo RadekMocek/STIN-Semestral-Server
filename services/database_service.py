@@ -33,6 +33,13 @@ def get_bank_account(username, currency):
     return list(filter(lambda bank_account: bank_account["owner"] == username and bank_account["currency"] == currency, bank_accounts))
 
 
+def get_bank_account_by_iban(iban):
+    """Vrátí seznam účtů s daným iban. (Této podmínce by měl vyhovovat jen jeden)."""
+    with open(BANK_ACCOUNTS_PATH, "r", encoding="utf8") as file:
+        bank_accounts = yaml.safe_load(file)
+    return list(filter(lambda bank_account: bank_account["iban"] == iban, bank_accounts))
+
+
 def set_bank_account_balance(iban, balance):
     """Nastaví u účtu s konkrétním 'iban' nový zůstatek 'balance'."""
     if not BANK_ACCOUNTS_PATH.exists():
