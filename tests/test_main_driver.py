@@ -1,10 +1,11 @@
 import os
 import sys
+import shutil
 import base64
 import jwt
 import datetime
 import pytest
-from pyfakefs.fake_filesystem_unittest import Patcher
+#from pyfakefs.fake_filesystem_unittest import Patcher
 import pathlib
 import yaml
 
@@ -148,18 +149,42 @@ EXCHANGE_RATES_DICT_2023_05_12 = {
 }
 
 
+# def test_payment_outgoing_with_coversion_to_czk_and_overdraft():
+#    bank_accounts = [{"balance": 14, "currency": "CZK", "iban": "TEST", "owner": "test_user"}]
+#    bank_accounts_after = [{"balance": -0.5291, "currency": "CZK", "iban": "TEST", "owner": "test_user"}]
+#    with Patcher(use_cache=False) as patcher:
+#        # "Mock" cached exchange rates
+#        patcher.fs.create_file(EXCHANGE_RATES_PATH)
+#        with open(EXCHANGE_RATES_PATH, "w", encoding="utf8") as file:
+#            yaml.dump(EXCHANGE_RATES_DICT_2023_05_12, file)
+#        # "Mock" bank account
+#        with open(BANK_ACCOUNTS_PATH, "w", encoding="utf8") as file:
+#            yaml.dump(bank_accounts, file)
+#        # Run test
+#        with app.app_context():
+#            main_driver.__payment_outgoing("test_user", "AUD", 1)
+#        assert database_service.get_bank_account_by_iban("TEST") == bank_accounts_after
+
+
+# Přes pyfakefs test opět prochází pouze lokálně ale ne na githubu, takže si soubory vytvořím dočasně na disku
 def test_payment_outgoing_with_coversion_to_czk_and_overdraft():
     bank_accounts = [{"balance": 14, "currency": "CZK", "iban": "TEST", "owner": "test_user"}]
     bank_accounts_after = [{"balance": -0.5291, "currency": "CZK", "iban": "TEST", "owner": "test_user"}]
-    with Patcher(use_cache=False) as patcher:
-        # "Mock" cached exchange rates
-        patcher.fs.create_file(EXCHANGE_RATES_PATH)
-        with open(EXCHANGE_RATES_PATH, "w", encoding="utf8") as file:
-            yaml.dump(EXCHANGE_RATES_DICT_2023_05_12, file)
-        # "Mock" bank account
-        with open(BANK_ACCOUNTS_PATH, "w", encoding="utf8") as file:
-            yaml.dump(bank_accounts, file)
-        # Run test
-        with app.app_context():
-            main_driver.__payment_outgoing("test_user", "AUD", 1)
-        assert database_service.get_bank_account_by_iban("TEST") == bank_accounts_after
+    
+    if not os.path.exists(DATABASE_PATH):
+        os.makedirs(DATABASE_PATH)
+    else:
+        assert False  # Pokud databáze již existuje, tak test ukončíme
+
+    # "Mock" cached exchange rates    
+    with open(EXCHANGE_RATES_PATH, "w+", encoding="utf8") as file:
+        yaml.dump(EXCHANGE_RATES_DICT_2023_05_12, file)
+    # "Mock" bank account
+    with open(BANK_ACCOUNTS_PATH, "w+", encoding="utf8") as file:
+        yaml.dump(bank_accounts, file)
+    # Run test
+    with app.app_context():
+        main_driver.__payment_outgoing("test_user", "AUD", 1)
+    assert database_service.get_bank_account_by_iban("TEST") == bank_accounts_after
+    # Smazat testovací databázi
+    shutil.rmtree(DATABASE_PATH)
